@@ -1,4 +1,5 @@
-
+  "message": "The signing key's size is 152 bits which is not secure enough for the HS256 algorithm.  The JWT JWA Specification (RFC 7518, Section 3.2) states that keys used with HS256 MUST have a size >= 256 bits (the key size must be greater than or equal to the hash output size).  Consider using the io.jsonwebtoken.security.Keys class's 'secretKeyFor(SignatureAlgorithm.HS256)' method to create a key guaranteed to be secure enough for HS256.  See https://tools.ietf.org/html/rfc7518#section-3.2 for more information.",
+    "path": "/api/login"
 
 qWerTy4%iOpAsDfG7!hJkLzXcVbNm9&
 // 1. First, let's create a JwtUtil class in the config package to handle token operations
