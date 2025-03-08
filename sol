@@ -1,3 +1,6 @@
+
+
+qWerTy4%iOpAsDfG7!hJkLzXcVbNm9&
 // 1. First, let's create a JwtUtil class in the config package to handle token operations
 
 package com.bostmytools.emppmng.config;
