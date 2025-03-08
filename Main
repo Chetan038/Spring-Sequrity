@@ -1,0 +1,504 @@
+This is my project Struture for employee management using spring boot 
+
+com.bostmystools.emppmng.config
+com.bostmystools.emppmng.controllers->EmplolyeesController.java,UserController.java
+com.bostmystools.emppmng.models->Employee.java,User.java
+com.bostmystools.emppmng.repo->EmployeeRepository.java,UserRepository.java
+com.bostmystools.emppmng.services->EmployeeService.java,EmployeeServiceImpl.java,UserService.java,UserServiceImpl.java
+
+this is my code files
+
+EmplolyeesController.java
+	package com.bostmytools.emppmng.controllers;
+	
+	import java.util.List;
+	
+	import org.springframework.beans.factory.annotation.Autowired;
+	import org.springframework.http.ResponseEntity;
+	import org.springframework.web.bind.annotation.DeleteMapping;
+	import org.springframework.web.bind.annotation.GetMapping;
+	import org.springframework.web.bind.annotation.PathVariable;
+	import org.springframework.web.bind.annotation.PostMapping;
+	import org.springframework.web.bind.annotation.PutMapping;
+	import org.springframework.web.bind.annotation.RequestBody;
+	import org.springframework.web.bind.annotation.RequestMapping;
+	import org.springframework.web.bind.annotation.RestController;
+	
+	import com.bostmytools.emppmng.models.Employee;
+	import com.bostmytools.emppmng.services.EmployeeService;
+	
+	@RestController
+	@RequestMapping("/api/employees")
+	public class EmployeesController {
+	
+	    @Autowired
+	    private EmployeeService employeeService;
+	
+	    @GetMapping("/all")
+	    public List<Employee> getAllEmployees() {
+	        return employeeService.getAllEmployees();
+	    }
+	    
+	    @GetMapping("/byid/{empId}")
+	    public ResponseEntity<Employee> getEmployeeById(@PathVariable String empId) {
+	        Employee employee = employeeService.getEmployeeById(empId).orElse(null);
+	        if (employee != null) {
+	            return ResponseEntity.ok(employee);
+	        } else {
+	            return ResponseEntity.notFound().build();
+	        }
+	    }
+	    
+	    @PostMapping("/create")
+	    public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
+	        try {
+	            Employee createdEmployee = employeeService.createEmployee(employee);
+	            return ResponseEntity.ok(createdEmployee);
+	        } catch (Exception e) {
+	            return ResponseEntity.badRequest().build();
+	        }
+	    }
+	    
+	    @PutMapping("/edit/{empId}")
+	    public ResponseEntity<Employee> updateEmployee(@PathVariable String empId, @RequestBody Employee employee) {
+	        try {
+	            employee.setEMP_ID(empId); // Ensure ID consistency
+	            Employee updatedEmployee = employeeService.updateEmployee(empId, employee);
+	            if (updatedEmployee != null) {
+	                return ResponseEntity.ok(updatedEmployee);
+	            } else {
+	                return ResponseEntity.notFound().build();
+	            }
+	        } catch (Exception e) {
+	            return ResponseEntity.badRequest().build();
+	        }
+	    }
+	    
+	    @DeleteMapping("/delete/{empId}")
+	    public ResponseEntity<Void> deleteEmployee(@PathVariable String empId) {
+	        try {
+	            employeeService.deleteEmployee(empId);
+	            return ResponseEntity.noContent().build();
+	        } catch (Exception e) {
+	            return ResponseEntity.notFound().build();
+	        }
+	    }
+	}
+
+UserController.java
+package com.bostmytools.emppmng.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.bostmytools.emppmng.models.User;
+import com.bostmytools.emppmng.services.UserService;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String password = credentials.get("password");
+        
+        User user = userService.authenticate(email, password).orElse(null);
+        
+        if (user != null) {
+            return ResponseEntity.ok(user);
+        } else {
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid credentials"));
+        }
+    }
+  
+}
+Employee.java
+package com.bostmytools.emppmng.models;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="EMPLOYEE", schema="NEWSO")
+public class Employee {
+
+	@Id
+	@Column(name="EMP_ID",nullable=false)
+	private String EMP_ID;
+	@Column(name="E_NAME",nullable=false)
+	private String E_NAME;
+	@Column(name="SALARY",nullable=false)
+	private Double SALARY;
+	@Column(name="DEPARTMENT",nullable=false)
+	private String DEPARTMENT;
+	@Column(name="STATUS",nullable=false)
+	private String STATUS;
+	@Column(name="PHONENO",nullable=false)
+	private String PHONENO;
+	public String getEMP_ID() {
+		return EMP_ID;
+	}
+	public void setEMP_ID(String eMP_ID) {
+		EMP_ID = eMP_ID;
+	}
+	public String getE_NAME() {
+		return E_NAME;
+	}
+	public void setE_NAME(String e_NAME) {
+		E_NAME = e_NAME;
+	}
+	public Double getSALARY() {
+		return SALARY;
+	}
+	public void setSALARY(Double sALARY) {
+		SALARY = sALARY;
+	}
+	public String getDEPARTMENT() {
+		return DEPARTMENT;
+	}
+	public void setDEPARTMENT(String dEPARTMENT) {
+		DEPARTMENT = dEPARTMENT;
+	}
+	public String getSTATUS() {
+		return STATUS;
+	}
+	public void setSTATUS(String sTATUS) {
+		STATUS = sTATUS;
+	}
+	public String getPHONENO() {
+		return PHONENO;
+	}
+	public void setPHONENO(String pHONENO) {
+		PHONENO = pHONENO;
+	}
+	
+}
+
+User.java
+package com.bostmytools.emppmng.models;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "USERR", schema = "NEWSO")
+public class User {
+    
+    @Id
+    @Column(name = "ID")
+    private Long id;
+    
+    @Column(name = "NAME", nullable = false)
+    private String name;
+    
+    @Column(name = "EMAIL", nullable = false)
+    private String email;
+    
+    @Column(name = "PASSWORD", nullable = false)
+    private String password;
+    
+    @Column(name = "PHONENO", nullable = false)
+    private String phoneNo;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getPhoneNo() { return phoneNo; }
+    public void setPhoneNo(String phoneNo) { this.phoneNo = phoneNo; }
+}
+EmployeeRepository.java
+package com.bostmytools.emppmng.repo;
+
+
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.bostmytools.emppmng.models.Employee;
+
+public interface EmployeeRepository extends JpaRepository<Employee, String> {
+    
+}
+
+UserRepository.java
+package com.bostmytools.emppmng.repo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.bostmytools.emppmng.models.User;
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmailAndPassword(String email, String password);
+    Optional<User> findByEmail(String email);
+}
+EmployeeService.java
+package com.bostmytools.emppmng.services;
+
+import java.util.List;
+import java.util.Optional;
+
+import com.bostmytools.emppmng.models.Employee;
+
+public interface EmployeeService {
+    
+    public List<Employee> getAllEmployees();
+    
+    public Optional<Employee> getEmployeeById(String empId);
+    
+    public Employee createEmployee(Employee employee);
+    
+    public Employee updateEmployee(String empId, Employee employee);
+    
+    public void deleteEmployee(String empId);
+}
+EmployeeServiceImpl.java
+package com.bostmytools.emppmng.services;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.bostmytools.emppmng.models.Employee;
+import com.bostmytools.emppmng.repo.EmployeeRepository;
+
+@Service
+public class EmployeeServiceImpl implements EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    
+    @Override
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
+
+    @Override
+    public Optional<Employee> getEmployeeById(String empId) {
+        return employeeRepository.findById(empId);
+    }
+
+    @Override
+    public Employee createEmployee(Employee employee) {
+        if (employeeRepository.existsById(employee.getEMP_ID())) {
+            throw new IllegalArgumentException("Employee with ID " + employee.getEMP_ID() + " already exists");
+        }
+        return employeeRepository.save(employee);
+    }
+
+    @Override
+    public Employee updateEmployee(String empId, Employee employee) {
+        if (!employeeRepository.existsById(empId)) {
+            return null;
+        }
+        
+        
+        employee.setEMP_ID(empId);
+        return employeeRepository.save(employee);
+    }
+
+    @Override
+    public void deleteEmployee(String empId) {
+        if (employeeRepository.existsById(empId)) {
+            employeeRepository.deleteById(empId);
+        } else {
+            throw new IllegalArgumentException("Employee with ID " + empId + " not found");
+        }
+    }
+}
+UserService.java
+package com.bostmytools.emppmng.services;
+
+import java.util.Optional;
+
+import com.bostmytools.emppmng.models.User;
+
+public interface UserService {
+    
+    public Optional<User> authenticate(String email, String password);
+    
+   
+}
+
+UserServiceImpl.java
+package com.bostmytools.emppmng.services;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.bostmytools.emppmng.models.User;
+import com.bostmytools.emppmng.repo.UserRepository;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Override
+    public Optional<User> authenticate(String email, String password) {
+        return userRepository.findByEmailAndPassword(email, password);
+    }
+    
+
+}
+
+application.properties
+spring.application.name=emppmng
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:xe
+spring.datasource.username=NEWCU
+spring.datasource.password=NEWCU_pwd
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
+
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+
+pom.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.3</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.bostmytools</groupId>
+	<artifactId>emppmng</artifactId>
+	<version>1.0</version>
+	<name>emppmng</name>
+	<description>Demo project for Spring Boot</description>
+	<url />
+	<licenses>
+		<license />
+	</licenses>
+	<developers>
+		<developer />
+	</developers>
+	<scm>
+		<connection />
+		<developerConnection />
+		<tag />
+		<url />
+	</scm>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is
+			preferred -->
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc11</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.chetan</groupId>
+			<artifactId>RESTApi</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+so add make a simple code for JWT auth using interceptor and user username and password from my database USERR table for 
+authntication and also tell where to store the files and comment and explain the code and flow 
+and also guide how to excute authentication in postman .
