@@ -1,270 +1,33 @@
-i have new-post compoenet.ts
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { PostService } from '../../services/post.service';
-import { Post } from '../../services/post.model';
-import { LoginService } from '../../services/login.service';
-
-@Component({
-  selector: 'app-new-post',
-  standalone: false,
-  templateUrl: './new-post.component.html',
-  styleUrl: './new-post.component.css'
-})
-export class NewPostComponent implements OnInit {
- 
-  posts: Post[] = [];
-  isEditMode = false;
-  isViewMode = false;
-  statusValue : string="ACTIVE";
-
-
-  post = {
-    post_id: 0, 
-    post_header: '',
-    post_content: '',
-    status: 'ACTIVE',
-    posted_by: '',
-    posted_at: '' 
-  };
-
-  responseMessage: string = '';
-
-  constructor(
-    private postService: PostService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private loginService:LoginService
-  ) {}
-
-  ngOnInit(): void {
-
-   const storedUsername=this.loginService.getUsername();
-   if(storedUsername){
-    this.post.posted_by=storedUsername;
-   }
-
-
-   
-    this.route.params.subscribe(params => {
-      const postId = params['id'];
-      if (postId) {
-        this.isEditMode = true;
-        this.isViewMode = true;
-        
-        const numericPostId = Number(postId);
-        
-        // Get the post data for editing
-        this.postService.getPosts().subscribe(posts => {
-          this.posts = posts;
-          const postToEdit = this.posts.find(p => p.post_id === numericPostId);
-          if (postToEdit) {
-            // Make a type-safe copy
-            this.post = {
-              post_id: postToEdit.post_id,
-              post_header: postToEdit.post_header,
-              post_content: postToEdit.post_content,
-              status: postToEdit.status,
-              posted_by: postToEdit.posted_by,
-              posted_at: postToEdit.posted_at
-            };
-          } else {
-            this.responseMessage = 'Post not found!';
-          }
-        });
-      }
-    });
+ngOnInit(): void {
+  const storedUsername = this.loginService.getUsername();
+  if (storedUsername) {
+    this.post.posted_by = storedUsername;
   }
 
-  submitPostForm() {
-    if (this.isEditMode) {
-      // Update existing post
-      this.postService.editPost(this.post as Post).subscribe({
-        next: (response) => {
-          this.responseMessage = 'Post updated successfully!';
-          setTimeout(() => {
-            this.router.navigate(['/home']);
-          }, 1500);
-        },
-        error: (error) => {
-          this.responseMessage = 'Failed to update post!';
+  this.route.params.subscribe(params => {
+    const postId = params['id'];
+    if (postId) {
+      this.isEditMode = true;
+      const numericPostId = Number(postId);
+
+      // Check if view mode is active
+      this.route.queryParams.subscribe(queryParams => {
+        if (queryParams['mode'] === 'view') {
+          this.isViewMode = true;
+          this.isEditMode = false; // Prevent editing in view mode
         }
       });
-    } else {
-      // Create new post
-     
-        this.postService.createPost(this.post).subscribe({
-          next: (response) => {
-            this.responseMessage = 'Post created successfully!';
-            console.log("okokzz");
-            this.post = {
-              post_id: 0, 
-              post_header: '',
-              post_content: '',
-              status: '',
-              posted_by: '',
-              posted_at: ''
-            };
-            setTimeout(() => {
-              this.router.navigate(['/home']);
-            }, 1500);
-          },
-          error: (error) => {
-            console.log("nonokzz");
-            this.responseMessage = 'Failed to submit data!';
-          }
-        });
-      
-    }
-  }
 
-  cancelForm() {
-    this.router.navigate(['/home']);
-  }
+      // Get the post data
+      this.postService.getPosts().subscribe(posts => {
+        this.posts = posts;
+        const postToEdit = this.posts.find(p => p.post_id === numericPostId);
+        if (postToEdit) {
+          this.post = { ...postToEdit };
+        } else {
+          this.responseMessage = 'Post not found!';
+        }
+      });
+    }
+  });
 }
-
-newpost compoent.html
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post Submission Form</title>
-    <style>
-    
-
-    </style>
-</head>
-<body>
-
-    <div class="container" [ngClass]="{'edit-mode': isEditMode}">
-        <form>
-            <div class="editid" *ngIf="isEditMode" hidden>
-                <label for="postId">Post ID</label>
-                <input type="text" id="postId" name="postId" [(ngModel)]="post.post_id" readonly>
-            </div>
-
-            <div class="editstatus" *ngIf="isEditMode">
-                <label for="status">Status</label>
-                <select id="status" name="status" [(ngModel)]="post.status">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                </select>
-            </div>
-
-            <div class="form-group" hidden>
-                <label for="postedBy">Posted By</label>
-                <input type="text" id="postedBy" name="postedBy" [(ngModel)]="post.posted_by" readonly>
-            </div>
-            
-          
-            
-            <div class="form-group" *ngIf="!isEditMode">
-                <label for="postHeader">Post Heading</label>
-                <input type="text" id="postHeader" name="postHeader" [(ngModel)]="post.post_header" required>
-            </div>
-
-            <div class="editheader" *ngIf="isEditMode">
-                <label for="postHeader">Post Heading</label>
-                <input type="text" id="postHeader" name="postHeader" [(ngModel)]="post.post_header" required>
-            </div>
-
-            <div class="editheader" *ngIf="isViewMode">
-                <label for="postHeader">Post Heading</label>
-                <input type="text" id="postHeader" name="postHeader" [(ngModel)]="post.post_header" readonly>
-            </div>
-           
-           
-
-            <div class="contentbox" *ngIf="!isEditMode">
-                <label for="postContent">Post Content</label>
-                <textarea id="postContent" name="postContent" [(ngModel)]="post.post_content" required></textarea>
-            </div>
-
-            <div class="editcontentbox" *ngIf="isEditMode">
-                <label for="postContent">Post Content</label>
-                <textarea class="edittextarea" id="postContent" name="postContent" [(ngModel)]="post.post_content" required></textarea>
-            </div>
-
-           
-
-           
-
-            <div class="button-group" *ngIf="!isEditMode">
-                <button type="submit" (click)="submitPostForm()" routerLink="">{{ isEditMode ? 'Update' : 'Submit' }}</button>
-                <button type="button" routerLink="/home" class="cancel-btn">Cancel</button>
-            </div>
-
-            <div class="editpostbuttons" *ngIf="isEditMode">
-                <button type="submit" (click)="submitPostForm()" routerLink="">{{ isEditMode ? 'Update' : 'Submit' }}</button>
-                <button type="button" routerLink="/home" class="cancel-btn">Cancel</button>
-            </div>
-
-        </form>
-
-        <div class="illustration">
-            <img src=""*ngIf="!isEditMode">
-        </div>
-
-
-        
-    </div>
-
-    <p *ngIf="responseMessage">{{ responseMessage }}</p>
-
-</body>
-</html>
-
-
-and a home compoent
-home compoent.html
-
-<div class="post-container">
-  <div class="post-row">
-    <ng-container *ngFor="let post of posts">
-      <div class="post-card" *ngIf="post.status === 'ACTIVE' || loggedIn">
-        <div class="post-header">
-          <h3>{{ post.post_header }}</h3>
-        </div>
-
-        <div class="post-info">
-          <p class="posted-by" *ngIf="loggedIn"><strong>Posted ID:</strong> {{ post.post_id}}</p>
-          <p class="posted-by"><strong>Posted by:</strong> {{ post.posted_by }}</p>
-          <p class="post-time"><strong>Posted at:</strong> {{ post.posted_at | date:'MMM d, y h:mm a' }}</p>
-        </div>
-
-        <div class="post-content">
-          <p>{{ post.post_content }}</p>
-        </div>
-
-        <div class="post-buttons" >
-          <button class="btn-1" (click)="togglestatus(post)" *ngIf="loggedIn">
-            {{ post.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-          </button>
-          <button class="btn-1" (click)="editPost(post.post_id)" *ngIf="loggedIn">Edit Post</button>
-          <button class="btn-2" (click)="deletePost(post.post_id)" *ngIf="loggedIn">Delete</button>
-          <button class="btn-1" (click)="viewPost(post.post_id)">view</button>
-        </div>
-      </div>
-    </ng-container>
-  </div>
-</div>
-
-homecoponent.ts
- some part of code only
-
-   editPost(postId:number){
-      this.router.navigate(['/new-post',postId]);
-    }
-
-    viewPost(postId:number){
-      this.router.navigate(['/new-post',postId]);
-    }
-
-
-now i want when cliked on view button it should open the same page that is opeing for when clikeced on edit buton but in view button all data should be in readonly
-mode and view should work for when it is logged in and also when it is not logged in
-
-
-
